@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Money</title>
+<meta name="theme-color" content="#2f4b3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Money">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --hdr:#2f4b3f; --bg:#1b1d0e; --card:#2f302b; --card2:#373c36;
+  --text:#ece9df; --muted:#aeab9f; --accent:#62c08f; --fab:#f2c14e;
+  --neg:#e8573f; --pos:#62c08f; --line:#51544c; --field:#262820;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,Roboto,"Segoe UI",sans-serif}
+body{min-height:100vh;overscroll-behavior-y:none;-webkit-user-select:none;user-select:none}
+input,select{-webkit-user-select:text;user-select:text}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg{display:block}
+#app{max-width:520px;margin:0 auto;padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+
+/* header */
+.hdr{background:var(--hdr);border-radius:0 0 28px 28px;padding:calc(env(safe-area-inset-top) + 8px) 10px 0}
+.hdr.overlap{padding-bottom:40px}
+.hdr-row{display:flex;align-items:center;min-height:56px;gap:4px}
+.ib{width:44px;height:44px;display:grid;place-items:center;flex:none;border-radius:50%}
+.ib svg{width:26px;height:26px}
+.ib:active{background:rgba(255,255,255,.08)}
+.hdr-center{flex:1;text-align:center;min-width:0}
+.hdr-title{font-size:20px;font-weight:500}
+.hdr-sub{font-size:14px;color:var(--muted);margin-top:2px}
+.hdr-amt{font-size:32px;font-weight:600;margin-top:2px;letter-spacing:.3px}
+.hdr-left{flex:1;font-size:22px;font-weight:500;padding-left:12px}
+.neg{color:var(--neg)} .pos{color:var(--pos)}
+.tabs{display:flex}
+.tabs button{flex:1;padding:12px 0 14px;font-size:17px;font-weight:600;letter-spacing:.5px;color:#a7b3a8;position:relative}
+.tabs button.on{color:var(--text)}
+.tabs button.on::after{content:"";position:absolute;left:23%;right:23%;bottom:6px;height:3px;background:var(--text);border-radius:2px}
+
+/* period card */
+.card{background:var(--card);border-radius:18px;margin:-40px 16px 0;position:relative;padding:6px 12px 14px}
+.modes{display:flex;justify-content:space-around}
+.modes button{padding:10px 4px 8px;color:var(--muted);font-size:17px}
+.modes button.on{color:var(--accent);box-shadow:inset 0 -3px var(--accent)}
+.pnav{display:flex;align-items:center;gap:4px;padding:8px 0 2px}
+.pnav .plabel{flex:1;text-align:center;font-size:17px;text-decoration:underline;text-underline-offset:4px}
+.pnav .ib svg{width:22px;height:22px}
+.ib.ghost{visibility:hidden}
+.totrow{display:flex;align-items:center;justify-content:space-between;padding:12px 6px 4px;font-size:18px;font-weight:600}
+.chip{font-size:13px;font-weight:500;background:var(--card2);border-radius:14px;padding:5px 10px;display:inline-flex;gap:6px;align-items:center}
+
+/* donut */
+.donut{width:250px;margin:8px auto 4px;position:relative}
+.donut-c{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;font-weight:500}
+.empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:15px;line-height:1.5}
+
+/* category rows */
+.crow{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:14px;margin:10px 16px 0;padding:12px 14px;width:calc(100% - 32px);text-align:left}
+.crow .nm{flex:1;font-size:18px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow .pc{width:52px;text-align:right;color:var(--muted);font-size:17px}
+.crow .am{width:96px;text-align:right;font-size:18px}
+.crow .bd{display:block;font-size:13px;color:var(--muted)}
+.crow .bd.over{color:var(--neg)}
+.crow.nag{background:rgba(242,193,78,.12);color:var(--fab)}
+.crow.nag svg{width:24px;height:24px;flex:none}
+.ci{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.ci svg{width:24px;height:24px}
+
+/* transactions */
+.dayh{padding:16px 10px 8px;color:var(--muted);font-size:16px}
+.group{background:var(--card2);border-radius:14px;overflow:hidden}
+.tx{display:flex;gap:12px;width:100%;padding:12px;text-align:left;align-items:center}
+.tx + .tx{border-top:1px solid var(--line)}
+.tx:active{background:rgba(255,255,255,.04)}
+.tx .mid{flex:1;min-width:0}
+.tx .cat{font-size:17px;font-weight:600}
+.tx .note{font-size:15px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tx .amt{font-size:17px;font-weight:500;align-self:flex-start;padding-top:1px}
+
+/* categories grid */
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;padding:22px 12px}
+.cgrid button{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:15px;min-width:0}
+.cgrid .ci{width:64px;height:64px}
+.cgrid .ci svg{width:36px;height:36px}
+.cgrid .lbl{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cgrid .add .ci{background:var(--fab);color:#2b2b2b;width:52px;height:52px;margin:6px 0}
+.cgrid.pick{padding:8px 0;gap:14px 4px}
+.cgrid.pick .ci{width:52px;height:52px}
+.cgrid.pick .ci svg{width:28px;height:28px}
+.cgrid.pick button{font-size:13px;color:var(--muted)}
+.cgrid.pick button.sel{color:var(--text)}
+.cgrid.pick button.sel .ci{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--text)}
+.cgrid.pick button:not(.sel) .ci{opacity:.55}
+
+/* regular payments */
+.sect{display:flex;align-items:center;gap:10px;padding:22px 22px 6px;color:var(--accent);font-size:19px}
+.sect svg{width:28px;height:28px}
+.rcard{display:block;width:calc(100% - 32px);margin:10px 16px 0;background:var(--card);border-radius:12px;padding:14px 16px;text-align:left}
+.rtop{display:flex;align-items:flex-start;gap:10px}
+.rtop .nm{flex:1;font-size:19px;min-width:0}
+.ramt{font-size:19px;margin-top:6px}
+.rdate{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:15px;margin-top:10px}
+.rdate svg{width:22px;height:22px}
+.rdate .fq{margin-left:auto;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:2px 8px}
+.sw{width:48px;height:28px;border-radius:14px;background:#4a4d47;position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:#c9cfc6;transition:left .18s}
+.sw.on{background:#386d52}
+.sw.on::after{left:24px;background:var(--accent)}
+
+/* fab */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom));width:64px;height:64px;border-radius:50%;background:var(--fab);color:#262626;box-shadow:0 6px 20px rgba(0,0,0,.5);display:grid;place-items:center;z-index:5}
+.fab svg{width:30px;height:30px}
+
+/* drawer */
+.drawer{position:fixed;inset:0;z-index:30;visibility:hidden}
+.drawer.open{visibility:visible}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:opacity .2s}
+.drawer.open .scrim{opacity:1}
+.panel{position:absolute;top:0;bottom:0;left:0;width:78%;max-width:300px;background:var(--card);padding:calc(env(safe-area-inset-top) + 18px) 0 0;transform:translateX(-100%);transition:transform .22s}
+.drawer.open .panel{transform:none}
+.panel .brand{padding:6px 22px 18px;font-size:22px;font-weight:600}
+.panel button{display:flex;align-items:center;gap:16px;width:100%;padding:15px 22px;font-size:17px;text-align:left}
+.panel button.on{color:var(--accent);background:rgba(98,192,143,.08)}
+.panel svg{width:24px;height:24px}
+
+/* sheet (forms) */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;-webkit-overflow-scrolling:touch;animation:up .2s ease-out}
+.sheet[hidden]{display:none}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.sheet-in{max-width:520px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
+.sh{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 10px) 0 10px;position:sticky;top:0;background:var(--bg);z-index:2}
+.sh b{font-size:18px;font-weight:600}
+.sh button{font-size:17px;color:var(--muted);padding:8px 4px;min-width:64px}
+.sh button.save{color:var(--accent);font-weight:600;text-align:right}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:4px;margin:6px 0 14px}
+.seg button{flex:1;padding:9px 0;border-radius:9px;font-size:16px;color:var(--muted)}
+.seg button.on{background:var(--hdr);color:var(--text);font-weight:600}
+.amt-in{width:100%;background:none;border:0;border-bottom:2px solid var(--line);color:var(--text);font-size:40px;font-weight:500;padding:6px 2px;outline:none;text-align:center;font-family:inherit}
+.amt-in:focus{border-color:var(--accent)}
+.lbl-s{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:20px 2px 8px}
+.field{width:100%;background:var(--field);border:1px solid var(--line);border-radius:12px;color:var(--text);font-size:17px;padding:12px;outline:none;font-family:inherit;-webkit-appearance:none;appearance:none;min-height:48px}
+.field:focus{border-color:var(--accent)}
+.row2{display:flex;gap:10px}.row2>*{flex:1;min-width:0}
+input[type=date].field,input[type=time].field{display:block}
+.danger{width:100%;margin-top:28px;padding:14px;border-radius:12px;background:rgba(232,87,63,.12);color:var(--neg);font-size:17px}
+.btn{width:100%;padding:14px;border-radius:12px;background:var(--card);font-size:17px;text-align:left;display:flex;align-items:center;gap:14px;margin-top:10px}
+.btn svg{width:24px;height:24px;flex:none}
+.btn small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.swatches{display:flex;flex-wrap:wrap;gap:12px}
+.swatches button{width:38px;height:38px;border-radius:50%}
+.swatches button.sel{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--text)}
+.icons{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.icons button{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:var(--card)}
+.icons button svg{width:26px;height:26px}
+.icons button.sel{background:var(--hdr);box-shadow:0 0 0 2px var(--accent)}
+.preview{display:flex;justify-content:center;margin:10px 0 4px}
+.preview .ci{width:72px;height:72px}.preview .ci svg{width:40px;height:40px}
+.swrow{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:12px;padding:12px 14px;margin-top:20px;font-size:17px}
+.swrow small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.hint{color:var(--muted);font-size:14px;line-height:1.5;margin:8px 2px}
+
+#toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#ece9df;color:#1b1d0e;padding:10px 16px;border-radius:22px;font-size:15px;z-index:50;display:none;align-items:center;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.4);white-space:nowrap}
+#toast.show{display:flex}
+#toast button{font-weight:700;color:#2f6b4f}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet" class="sheet" hidden></div>
+<div id="drawer" class="drawer"><div class="scrim" data-a="drawer-close"></div><div class="panel" id="panel"></div></div>
+<div id="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+/* ---------- icons (simple line drawings, 24x24) ---------- */
+const ICONS = {
+  burger:'<path d="M4 10c0-3.3 3.6-6 8-6s8 2.7 8 6z"/><path d="M9 7h.01M12 6.2h.01M15 7h.01"/><path d="M3 13.5c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1"/><path d="M4 17h16v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>',
+  basket:'<path d="M3 10h18l-1.8 8.4A2 2 0 0 1 17.2 20H6.8a2 2 0 0 1-2-1.6z"/><path d="M7.5 10 10 4.5M16.5 10 14 4.5M9 13.5v3.5M12 13.5v3.5M15 13.5v3.5"/>',
+  clapper:'<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9 4.4 4.6A1 1 0 0 1 5.3 4h14.4a1 1 0 0 1 .9.6L21 9"/><path d="M8.5 4 7 9M13.5 4 12 9M18.5 4 17 9"/><path d="M10.5 12.5v5l4-2.5z"/>',
+  plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  bus:'<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 6.5h8M7.5 14.5h.01M16.5 14.5h.01M7 18v2.5M17 18v2.5"/>',
+  question:'<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.6v.5"/><path d="M12 16.8h.01"/>',
+  gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  heartpulse:'<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/><path d="M3.5 12H8l1.5-2.5 2 5 1.5-2.5h7.5"/>',
+  wallet:'<path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 6v12a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-3"/>',
+  heart:'<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h14V9"/><path d="M10 20v-6h4v6"/>',
+  cup:'<path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 2.5v3M12 2.5v3"/>',
+  cap:'<path d="M2 9.5 12 5l10 4.5L12 14z"/><path d="M6 11.5V16c3 2 9 2 12 0v-4.5M22 9.5V15"/>',
+  dumbbell:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+  coins:'<circle cx="9" cy="9" r="6"/><path d="M15.6 9.6a6 6 0 1 1-6 6"/><path d="M9 6.5v5"/>',
+  shirt:'<path d="M8 3 3.5 5.5 2 10l3 1.5 1-1V21h12V10.5l1 1 3-1.5-1.5-4.5L16 3c0 2-1.8 3.5-4 3.5S8 5 8 3z"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  star:'<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/>',
+  phone:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/>',
+  cart:'<circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3h3l2.4 12.4a1.5 1.5 0 0 0 1.5 1.1h8.3a1.5 1.5 0 0 0 1.5-1.2L21 7H6.2"/>',
+  /* ui */
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  receipt:'<path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21l-2.4-1.5L5 21z"/><path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4"/>',
+  left:'<path d="m15 5-7 7 7 7"/>', right:'<path d="m9 5 7 7-7 7"/>',
+  back:'<path d="M19 12H5M11 5l-7 7 7 7"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  today:'<path d="m5 6 6 6-6 6M12 6l6 6-6 6M20 5v14"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cal:'<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h.01M12 13.5h.01M16.5 13.5h.01M7.5 17h.01M12 17h.01"/>',
+  pie:'<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 2.6A9 9 0 0 1 21.4 9H15z"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  repeat:'<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="3.5"/><rect x="14" y="3" width="7" height="7" rx="3.5"/><rect x="3" y="14" width="7" height="7" rx="3.5"/><rect x="14" y="14" width="7" height="7" rx="3.5"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  download:'<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>',
+  upload:'<path d="M12 21V9M7 14l5-5 5 5M4 4h16"/>',
+  table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 10v10"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>'
+};
+const PICK_ICONS = ['burger','basket','clapper','plane','bus','question','gift','heartpulse','wallet','heart','home','cup','cap','dumbbell','briefcase','coins','shirt','music','star','phone','cart'];
+const COLORS = ['#e8b53e','#74ae52','#e14b43','#4472c4','#8a8a8a','#d3628f','#5db8a6','#9b84d6','#ec8a46','#5b93db','#e07b39','#3f9c6b'];
+const ic = (n, w=1.6) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||ICONS.question}</svg>`;
+
+/* ---------- data ---------- */
+const KEY = 'money-data-v1';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+function defaults(){
+  const c = (id,name,type,color,icon,budget=null) => ({id,name,type,color,icon,budget});
+  return { version:1, categories:[
+    c('restaurant','Restaurant','expense','#e8b53e','burger'),
+    c('groceries','Groceries','expense','#74ae52','basket'),
+    c('sidehustle','Side hustle','expense','#e14b43','clapper'),
+    c('vacation','Vacation','expense','#e14b43','plane'),
+    c('transport','Transportation','expense','#4472c4','bus'),
+    c('other','Other','expense','#8a8a8a','question'),
+    c('gifts','Gifts','expense','#d3628f','gift'),
+    c('health','Health','expense','#e14b43','heartpulse'),
+    c('leisure','Leisure','expense','#5db8a6','wallet'),
+    c('love','Loveee','expense','#e14b43','heart'),
+    c('salary','Salary','income','#3f9c6b','briefcase'),
+    c('sidehustle-in','Side hustle','income','#e14b43','clapper'),
+    c('other-in','Other','income','#8a8a8a','coins'),
+  ], transactions:[], recurring:[] };
+}
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (raw) { const d = JSON.parse(raw); if (d && d.categories) return d; } } catch(e) {}
+  return defaults();
+}
+let db = load();
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch(e){ toast('⚠️ Could not save – storage blocked'); }
+}
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){}
+
+/* ---------- helpers ---------- */
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const short = d => `${MON[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+const longDate = d => `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} (${DOW[d.getDay()]})`;
+const nowTime = () => { const n = new Date(); return `${pad(n.getHours())}:${pad(n.getMinutes())}`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function money(c){
+  const v = Math.abs(c)/100;
+  return '€' + (c % 100 === 0
+    ? v.toLocaleString('en-US',{maximumFractionDigits:0})
+    : v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
+}
+function parseAmount(s){
+  s = String(s).replace(/[€\s]/g,'');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
+  else s = s.replace(',','.');
+  const v = parseFloat(s);
+  return isFinite(v) && v > 0 ? Math.round(v*100) : null;
+}
+const cat = id => db.categories.find(c => c.id === id) || {id, name:'Unknown', color:'#666', icon:'question'};
+const catsOf = type => db.categories.filter(c => c.type === type && !c.archived);
+const ciHtml = c => `<span class="ci" style="background:${c.color}">${ic(c.icon)}</span>`;
+
+/* ---------- recurring ---------- */
+function advance(r){
+  const [d, t] = r.next.split('T');
+  const dt = parseYmd(d);
+  let n;
+  if (r.freq === 'weekly') n = addDays(dt, 7);
+  else if (r.freq === 'yearly') n = new Date(dt.getFullYear()+1, dt.getMonth(), Math.min(r.day||dt.getDate(), new Date(dt.getFullYear()+1, dt.getMonth()+1, 0).getDate()));
+  else { const day = r.day || dt.getDate(); const last = new Date(dt.getFullYear(), dt.getMonth()+2, 0).getDate(); n = new Date(dt.getFullYear(), dt.getMonth()+1, Math.min(day, last)); }
+  r.next = `${ymd(n)}T${t || '09:00'}`;
+}
+function processRecurring(){
+  const now = new Date(); let added = 0;
+  for (const r of db.recurring) {
+    if (!r.active) continue;
+    let guard = 0;
+    while (new Date(r.next) <= now && guard++ < 200) {
+      const [d,t] = r.next.split('T');
+      db.transactions.push({id:uid(), type:r.type, amount:r.amount, categoryId:r.categoryId, date:d, time:t, note:r.name, recurringId:r.id});
+      added++; advance(r);
+    }
+  }
+  if (added) { save(); toast(`Added ${added} regular payment${added>1?'s':''}`); }
+}
+
+/* ---------- ui state ---------- */
+const ui = { view:'stats', type:'expense', mode:'month', anchor:new Date(), from:null, to:null, catFilter:null, catType:'expense' };
+function range(){
+  const a = ui.anchor;
+  switch (ui.mode) {
+    case 'day': return [a, a];
+    case 'week': { const s = addDays(a, -a.getDay()); return [s, addDays(s,6)]; }
+    case 'year': return [new Date(a.getFullYear(),0,1), new Date(a.getFullYear(),11,31)];
+    case 'period': return [ui.from, ui.to];
+    default: return [new Date(a.getFullYear(),a.getMonth(),1), new Date(a.getFullYear(),a.getMonth()+1,0)];
+  }
+}
+function rangeLabel(){
+  const [f,t] = range();
+  switch (ui.mode) {
+    case 'day': return `${DOW[f.getDay()]}, ${short(f)}, ${f.getFullYear()}`;
+    case 'week': return `${short(f)} – ${short(t)}`;
+    case 'month': return `${MON[f.getMonth()]} ${f.getFullYear()}`;
+    case 'year': return String(f.getFullYear());
+    default: return `${short(f)} – ${short(t)}, ${t.getFullYear()}`;
+  }
+}
+function shift(dir){
+  const a = ui.anchor;
+  ui.anchor = ui.mode==='day' ? addDays(a,dir) : ui.mode==='week' ? addDays(a,7*dir)
+    : ui.mode==='year' ? new Date(a.getFullYear()+dir,0,1) : new Date(a.getFullYear(),a.getMonth()+dir,1);
+}
+function inRangeTx(type){
+  const [f,t] = range(); const F = ymd(f), T = ymd(t);
+  return db.transactions.filter(x => x.type===type && x.date>=F && x.date<=T);
+}
+const sum = arr => arr.reduce((s,x) => s + x.amount, 0);
+
+/* ---------- views ---------- */
+const tabs = (cur, act='type') => `<div class="tabs">
+  <button data-a="${act}" data-v="expense" class="${cur==='expense'?'on':''}">EXPENSES</button>
+  <button data-a="${act}" data-v="income" class="${cur==='income'?'on':''}">INCOME</button></div>`;
+
+function periodBlock(){
+  const [f,t] = range(), today = ymd(new Date());
+  const isCurrent = ui.mode !== 'period' && ymd(f) <= today && ymd(t) >= today;
+  const modes = [['day','Day'],['week','Week'],['month','Month'],['year','Year'],['period','Period']]
+    .map(([k,l]) => `<button data-a="mode" data-v="${k}" class="${ui.mode===k?'on':''}">${l}</button>`).join('');
+  const nav = ui.mode === 'period'
+    ? `<div class="pnav"><span class="ib ghost"></span><button class="plabel" data-a="period-edit">${rangeLabel()}</button><span class="ib ghost"></span></div>`
+    : `<div class="pnav"><button class="ib" data-a="prev">${ic('left',2)}</button>
+        <button class="plabel" data-a="today">${rangeLabel()}</button>
+        <button class="ib ${isCurrent?'ghost':''}" data-a="today" aria-label="Jump to today">${ic('today')}</button>
+        <button class="ib" data-a="next">${ic('right',2)}</button></div>`;
+  return `<div class="modes">${modes}</div>${nav}`;
+}
+
+function donut(rows, total){
+  const R = 86, C = 2*Math.PI*R, SW = 30;
+  let segs = '';
+  if (total > 0) {
+    let off = 0; const gap = rows.length > 1 ? 2.5 : 0;
+    for (const r of rows) {
+      const len = r.amount/total*C;
+      segs += `<circle r="${R}" cx="125" cy="125" fill="none" stroke="${r.cat.color}" stroke-width="${SW}"
+        stroke-dasharray="${Math.max(len-gap,0.01)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 125 125)"/>`;
+      off += len;
+    }
+  } else segs = `<circle r="${R}" cx="125" cy="125" fill="none" stroke="#45473f" stroke-width="${SW}"/>`;
+  return `<div class="donut"><svg viewBox="0 0 250 250">${segs}
+    <circle r="${R-SW/2-8}" cx="125" cy="125" fill="none" stroke="#5a5c54" stroke-width="2.5" stroke-dasharray="7 5"/></svg>
+    <div class="donut-c">${money(total)}</div></div>`;
+}
+
+function viewStats(){
+  const txs = inRangeTx(ui.type), total = sum(txs);
+  const by = {};
+  for (const x of txs) by[x.categoryId] = (by[x.categoryId]||0) + x.amount;
+  const rows = Object.entries(by).map(([id,amount]) => ({cat:cat(id), amount})).sort((a,b) => b.amount-a.amount);
+  const sign = ui.type==='expense' ? '-' : '+';
+  const list = rows.map(r => {
+    const pct = total ? Math.round(r.amount/total*100) : 0;
+    const bud = ui.mode==='month' && r.cat.budget ? `<span class="bd ${r.amount>r.cat.budget?'over':''}">of ${money(r.cat.budget)}</span>` : '';
+    return `<button class="crow" data-a="cat-row" data-id="${r.cat.id}">${ciHtml(r.cat)}
+      <span class="nm">${esc(r.cat.name)}</span><span class="pc">${pct}%</span><span class="am">${money(r.amount)}${bud}</span></button>`;
+  }).join('');
+  return `<header class="hdr overlap">
+    <div class="hdr-row"><button class="ib" data-a="menu">${ic('menu')}</button>
+      <div class="hdr-center"><div class="hdr-title">Total</div>
+        <div class="hdr-amt ${ui.type==='expense'?'neg':'pos'}">${total?sign:''}${money(total)}</div></div>
+      <button class="ib" data-a="go-tx">${ic('receipt')}</button></div>
+    ${tabs(ui.type)}</header>
+  <section class="card">${periodBlock()}${donut(rows,total)}
+    ${rows.length?'':`<div class="empty">No ${ui.type==='expense'?'expenses':'income'} in this period.<br>Tap <b>+</b> to add one.</div>`}
+  </section>${backupNag()}${list}
+  <button class="fab" data-a="add" aria-label="Add">${ic('plus',2)}</button>`;
+}
+function backupNag(){
+  if (!db.transactions.length) return '';
+  const days = db.lastBackup ? Math.floor((Date.now() - db.lastBackup) / 864e5) : null;
+  if (days !== null && days < 14) return '';
+  return `<button class="crow nag" data-a="export">${ic('download')}<span class="nm" style="font-size:15px;white-space:normal">${days===null?'No backup yet':`Last backup ${days} days ago`} – tap to save one</span></button>`;
+}
+
+function viewTx(){
+  let txs = inRangeTx(ui.type);
+  const fc = ui.catFilter ? cat(ui.catFilter) : null;
+  if (fc) txs = txs.filter(x => x.categoryId === fc.id);
+  txs.sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time) || (b.id > a.id ? 1 : -1));
+  const groups = [];
+  for (const x of txs) { const g = groups[groups.length-1]; if (g && g.date===x.date) g.items.push(x); else groups.push({date:x.date, items:[x]}); }
+  const body = groups.map(g => `<div class="dayh">${longDate(parseYmd(g.date))}</div><div class="group">${
+    g.items.map(x => { const c = cat(x.categoryId); return `<button class="tx" data-a="edit-tx" data-id="${x.id}">${ciHtml(c)}
+      <span class="mid"><div class="cat">${esc(c.name)}</div>${x.note?`<div class="note">${esc(x.note)}</div>`:''}</span>
+      <span class="amt">${money(x.amount)}</span></button>`; }).join('')}</div>`).join('');
+  return `<header class="hdr overlap">
+    <div class="hdr-row"><button class="ib" data-a="back">${ic('back',2)}</button>
+      <div class="hdr-center"><div class="hdr-title">Transactions</div><div class="hdr-sub">${fc?esc(fc.name):'Total'}</div></div>
+      <span class="ib ghost"></span></div>${tabs(ui.type)}</header>
+  <section class="card">${periodBlock()}
+    <div class="totrow"><span>Total: ${money(sum(txs))}</span>${fc?`<button class="chip" data-a="clear-filter">${esc(fc.name)} ${ic('x',2).replace('<svg','<svg width="14" height="14"')}</button>`:''}</div>
+    ${body || `<div class="empty">Nothing here yet.</div>`}</section>
+  <button class="fab" data-a="add" aria-label="Add">${ic('plus',2)}</button>`;
+}
+
+function viewCats(){
+  const cs = catsOf(ui.catType);
+  return `<header class="hdr"><div class="hdr-row"><button class="ib" data-a="menu">${ic('menu')}</button>
+    <div class="hdr-left">Categories</div></div>${tabs(ui.catType,'cat-type')}</header>
+  <div class="cgrid">${cs.map(c => `<button data-a="cat-edit" data-id="${c.id}">${ciHtml(c)}<span class="lbl">${esc(c.name)}</span></button>`).join('')}
+    <button class="add" data-a="cat-edit"><span class="ci">${ic('plus',2)}</span><span class="lbl">Create</span></button></div>`;
+}
+
+const FREQ = {weekly:'Weekly', monthly:'Monthly', yearly:'Yearly'};
+function viewRec(){
+  const rs = [...db.recurring].sort((a,b) => a.next.localeCompare(b.next));
+  const fmtNext = s => { const [d,t] = s.split('T'); return `${longDate(parseYmd(d))}, ${t}`; };
+  return `<header class="hdr"><div class="hdr-row"><button class="ib" data-a="menu">${ic('menu')}</button>
+    <div class="hdr-center"><div class="hdr-title" style="font-size:22px">Regular Payments</div></div><span class="ib ghost"></span></div></header>
+  <div class="sect">${ic('clock')}Upcoming</div>
+  ${rs.map(r => `<button class="rcard" data-a="rec-edit" data-id="${r.id}">
+    <div class="rtop"><span class="nm">${esc(r.name)}</span><span class="sw ${r.active?'on':''}" data-a="rec-toggle" data-id="${r.id}" role="switch" aria-checked="${!!r.active}"></span></div>
+    <div class="ramt">${r.type==='expense'?'-':'+'} ${money(r.amount)}</div>
+    <div class="rdate">${ic('cal')}<span>${fmtNext(r.next)}</span><span class="fq">${FREQ[r.freq]}</span></div></button>`).join('')
+    || `<div class="empty">No regular payments yet.</div>`}
+  <p class="hint" style="padding:8px 22px">When the switch is on, the payment is added automatically on its due date (next time you open the app).</p>
+  <button class="fab" data-a="rec-edit" aria-label="Add">${ic('plus',2)}</button>`;
+}
+
+function viewSettings(){
+  return `<header class="hdr"><div class="hdr-row"><button class="ib" data-a="menu">${ic('menu')}</button>
+    <div class="hdr-left">Backup</div></div></header>
+  <div style="padding:14px 16px">
+    <button class="btn" data-a="export">${ic('download')}<span>Export backup<small>Saves all data as a .json file</small></span></button>
+    <button class="btn" data-a="import">${ic('upload')}<span>Import backup<small>Replaces current data with a .json backup</small></span></button>
+    <button class="btn" data-a="csv">${ic('table')}<span>Export CSV<small>For Excel / Numbers</small></span></button>
+    <p class="hint">Your data lives only on this device, inside this Home Screen app. Export a backup now and then (e.g. to iCloud Drive) so nothing gets lost.</p>
+    <p class="hint">${db.transactions.length} transactions · ${db.recurring.length} regular payments · ${db.categories.length} categories</p>
+  </div>`;
+}
+
+const NAV = [['stats','pie','Overview'],['tx','list','Transactions'],['rec','repeat','Regular payments'],['cats','grid','Categories'],['settings','gear','Backup']];
+function render(){
+  const v = {stats:viewStats, tx:viewTx, cats:viewCats, rec:viewRec, settings:viewSettings}[ui.view] || viewStats;
+  document.getElementById('app').innerHTML = v();
+  document.getElementById('panel').innerHTML = `<div class="brand">Money</div>` +
+    NAV.map(([k,i,l]) => `<button data-a="nav" data-v="${k}" class="${ui.view===k?'on':''}">${ic(i)}${l}</button>`).join('');
+}
+
+/* ---------- sheets ---------- */
+const sheet = document.getElementById('sheet');
+let form = null;
+function openSheet(html){ sheet.innerHTML = `<div class="sheet-in">${html}</div>`; sheet.hidden = false; document.body.style.overflow='hidden'; }
+function closeSheet(){ sheet.hidden = true; sheet.innerHTML = ''; form = null; document.body.style.overflow=''; }
+const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+
+function openTx(id){
+  const x = id ? db.transactions.find(t => t.id===id) : null;
+  const type = x ? x.type : ui.type;
+  const defCat = ui.catFilter && cat(ui.catFilter).type===type ? ui.catFilter : (catsOf(type)[0]||{}).id;
+  form = {kind:'tx', id, type, categoryId: x ? x.categoryId : defCat,
+    amount: x ? (x.amount/100).toFixed(2).replace('.00','') : '', date: x ? x.date : ymd(defaultDate()), time: x ? x.time : nowTime(), note: x ? x.note : ''};
+  renderTx(); if (!id) document.getElementById('f-amt')?.focus();
+}
+function defaultDate(){
+  const [f,t] = range(), today = new Date();
+  return (ymd(today) >= ymd(f) && ymd(today) <= ymd(t)) ? today : (ui.mode==='day' ? f : today);
+}
+function readTx(){ Object.assign(form, {amount:val('f-amt'), date:val('f-date'), time:val('f-time'), note:val('f-note')}); }
+function renderTx(){
+  const f = form, cs = catsOf(f.type);
+  if (f.categoryId && !cs.some(c => c.id===f.categoryId) && cat(f.categoryId).type===f.type) cs.push(cat(f.categoryId));
+  openSheet(`<div class="sh"><button data-a="close">Cancel</button><b>${f.id?'Edit':'New'} ${f.type}</b><button class="save" data-a="save-tx">Save</button></div>
+    <div class="seg"><button data-a="f-type" data-v="expense" class="${f.type==='expense'?'on':''}">Expense</button><button data-a="f-type" data-v="income" class="${f.type==='income'?'on':''}">Income</button></div>
+    <input id="f-amt" class="amt-in" inputmode="decimal" placeholder="€0" value="${esc(f.amount)}" autocomplete="off">
+    <div class="lbl-s">Category</div>
+    <div class="cgrid pick">${cs.map(c => `<button data-a="f-cat" data-id="${c.id}" class="${c.id===f.categoryId?'sel':''}">${ciHtml(c)}<span class="lbl">${esc(c.name)}</span></button>`).join('')}</div>
+    <div class="lbl-s">Note</div><input id="f-note" class="field" value="${esc(f.note)}" placeholder="e.g. Mittagessen Mensa">
+    <div class="lbl-s">Date & time</div>
+    <div class="row2"><input id="f-date" type="date" class="field" value="${f.date}"><input id="f-time" type="time" class="field" value="${f.time}"></div>
+    ${f.id?`<button class="danger" data-a="del-tx">Delete</button>`:''}`);
+}
+
+function openCat(id){
+  const c = id ? cat(id) : null;
+  form = {kind:'cat', id, type: c ? c.type : ui.catType, name: c ? c.name : '', color: c ? c.color : COLORS[0], icon: c ? c.icon : 'star',
+    budget: c && c.budget ? String(c.budget/100) : ''};
+  renderCat();
+}
+function readCat(){ Object.assign(form, {name:val('f-name'), budget:val('f-budget')}); }
+function renderCat(){
+  const f = form;
+  openSheet(`<div class="sh"><button data-a="close">Cancel</button><b>${f.id?'Edit':'New'} category</b><button class="save" data-a="save-cat">Save</button></div>
+    <div class="preview">${ciHtml(f)}</div>
+    <div class="lbl-s">Name</div><input id="f-name" class="field" value="${esc(f.name)}" placeholder="Category name">
+    <div class="lbl-s">Color</div><div class="swatches">${COLORS.map(c => `<button data-a="f-color" data-v="${c}" style="background:${c}" class="${c===f.color?'sel':''}"></button>`).join('')}</div>
+    <div class="lbl-s">Icon</div><div class="icons">${PICK_ICONS.map(i => `<button data-a="f-icon" data-v="${i}" class="${i===f.icon?'sel':''}">${ic(i)}</button>`).join('')}</div>
+    ${f.type==='expense'?`<div class="lbl-s">Monthly budget (optional)</div><input id="f-budget" class="field" inputmode="decimal" value="${esc(f.budget)}" placeholder="e.g. 500">`:''}
+    ${f.id?`<button class="danger" data-a="del-cat">Delete category</button>`:''}`);
+}
+
+function openRec(id){
+  const r = id ? db.recurring.find(x => x.id===id) : null;
+  const d = new Date(); d.setDate(d.getDate()+1);
+  form = {kind:'rec', id, type: r ? r.type : 'expense', name: r ? r.name : '', amount: r ? String(r.amount/100) : '',
+    categoryId: r ? r.categoryId : 'other', freq: r ? r.freq : 'monthly', date: r ? r.next.split('T')[0] : ymd(d),
+    time: r ? r.next.split('T')[1] : '09:00', active: r ? r.active : true};
+  renderRec();
+}
+function readRec(){ Object.assign(form, {name:val('f-name'), amount:val('f-amt'), categoryId:val('f-cat'), freq:val('f-freq'), date:val('f-date'), time:val('f-time')}); }
+function renderRec(){
+  const f = form, cs = catsOf(f.type);
+  if (!cs.some(c => c.id===f.categoryId)) f.categoryId = (cs[0]||{}).id;
+  openSheet(`<div class="sh"><button data-a="close">Cancel</button><b>${f.id?'Edit':'New'} regular payment</b><button class="save" data-a="save-rec">Save</button></div>
+    <div class="seg"><button data-a="f-rtype" data-v="expense" class="${f.type==='expense'?'on':''}">Expense</button><button data-a="f-rtype" data-v="income" class="${f.type==='income'?'on':''}">Income</button></div>
+    <div class="lbl-s">Name</div><input id="f-name" class="field" value="${esc(f.name)}" placeholder="e.g. Spotify">
+    <div class="lbl-s">Amount</div><input id="f-amt" class="field" inputmode="decimal" value="${esc(f.amount)}" placeholder="€0">
+    <div class="lbl-s">Category</div><select id="f-cat" class="field">${cs.map(c => `<option value="${c.id}" ${c.id===f.categoryId?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+    <div class="lbl-s">Repeats</div><select id="f-freq" class="field">${Object.entries(FREQ).map(([k,l]) => `<option value="${k}" ${k===f.freq?'selected':''}>${l}</option>`).join('')}</select>
+    <div class="lbl-s">Next payment</div>
+    <div class="row2"><input id="f-date" type="date" class="field" value="${f.date}"><input id="f-time" type="time" class="field" value="${f.time}"></div>
+    <div class="swrow"><span>Add automatically<small>Creates the entry on the due date</small></span><span class="sw ${f.active?'on':''}" data-a="f-active"></span></div>
+    ${f.id?`<button class="danger" data-a="del-rec">Delete regular payment</button>`:''}`);
+}
+
+function openPeriod(){
+  const [f,t] = range();
+  openSheet(`<div class="sh"><button data-a="close">Cancel</button><b>Custom period</b><button class="save" data-a="save-period">Apply</button></div>
+    <div class="lbl-s">From</div><input id="f-from" type="date" class="field" value="${ymd(f)}">
+    <div class="lbl-s">To</div><input id="f-to" type="date" class="field" value="${ymd(t)}">`);
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, undoFn){
+  const el = document.getElementById('toast');
+  el.innerHTML = esc(msg) + (undoFn ? ' <button id="undo">UNDO</button>' : '');
+  el.classList.add('show');
+  if (undoFn) document.getElementById('undo').onclick = () => { undoFn(); el.classList.remove('show'); };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), undoFn ? 5000 : 2500);
+}
+
+/* ---------- backup ---------- */
+async function shareOrDownload(name, text, mime){
+  const blob = new Blob([text], {type:mime});
+  try {
+    const file = new File([blob], name, {type:mime});
+    if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:name}); return true; }
+  } catch(e) { if (e && e.name === 'AbortError') return false; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  return true;
+}
+const stamp = () => ymd(new Date());
+document.getElementById('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!d || !Array.isArray(d.categories) || !Array.isArray(d.transactions)) throw new Error('bad');
+    d.recurring = d.recurring || [];
+    try { localStorage.setItem(KEY+'-before-import', JSON.stringify(db)); } catch(_) {}
+    db = d; save(); processRecurring(); render();
+    toast(`Imported ${d.transactions.length} transactions`);
+  } catch(err) { toast('That file is not a valid backup'); }
+});
+
+/* ---------- actions ---------- */
+const A = {
+  menu(){ document.getElementById('drawer').classList.add('open'); },
+  'drawer-close'(){ document.getElementById('drawer').classList.remove('open'); },
+  nav(_, v){ ui.view = v; ui.catFilter = null; A['drawer-close'](); window.scrollTo(0,0); },
+  type(_, v){ ui.type = v; ui.catFilter = null; },
+  'cat-type'(_, v){ ui.catType = v; },
+  mode(_, v){
+    if (v === 'period') { if (!ui.from) { const [f,t] = range(); ui.from = f; ui.to = t; } ui.mode = v; openPeriod(); return; }
+    ui.mode = v;
+  },
+  prev(){ shift(-1); }, next(){ shift(1); }, today(){ ui.anchor = new Date(); },
+  'period-edit'(){ openPeriod(); return 'keep'; },
+  'save-period'(){
+    const f = val('f-from'), t = val('f-to'); if (!f || !t) return toast('Pick both dates');
+    ui.from = parseYmd(f <= t ? f : t); ui.to = parseYmd(f <= t ? t : f); closeSheet();
+  },
+  'go-tx'(){ ui.view = 'tx'; ui.catFilter = null; window.scrollTo(0,0); },
+  'cat-row'(_, __, id){ ui.view = 'tx'; ui.catFilter = id; window.scrollTo(0,0); },
+  back(){ ui.view = 'stats'; ui.catFilter = null; },
+  'clear-filter'(){ ui.catFilter = null; },
+  add(){ openTx(null); return 'keep'; },
+  'edit-tx'(_, __, id){ openTx(id); return 'keep'; },
+  close(){ closeSheet(); return 'keep'; },
+  'f-type'(_, v){ readTx(); form.type = v; form.categoryId = (catsOf(v)[0]||{}).id; renderTx(); return 'keep'; },
+  'f-cat'(_, __, id){ readTx(); form.categoryId = id; renderTx(); return 'keep'; },
+  'save-tx'(){
+    readTx(); const amount = parseAmount(form.amount);
+    if (!amount) { toast('Enter an amount'); return 'keep'; }
+    if (!form.categoryId) { toast('Pick a category'); return 'keep'; }
+    const rec = {type:form.type, amount, categoryId:form.categoryId, date:form.date || ymd(new Date()), time:form.time || nowTime(), note:form.note.trim()};
+    if (form.id) Object.assign(db.transactions.find(t => t.id===form.id), rec);
+    else db.transactions.push({id:uid(), ...rec});
+    save(); closeSheet();
+  },
+  'del-tx'(){
+    const i = db.transactions.findIndex(t => t.id===form.id); if (i < 0) return;
+    const [gone] = db.transactions.splice(i,1); save(); closeSheet(); render();
+    toast('Deleted', () => { db.transactions.push(gone); save(); render(); }); return 'keep';
+  },
+  'cat-edit'(_, __, id){ openCat(id); return 'keep'; },
+  'f-color'(_, v){ readCat(); form.color = v; renderCat(); return 'keep'; },
+  'f-icon'(_, v){ readCat(); form.icon = v; renderCat(); return 'keep'; },
+  'save-cat'(){
+    readCat(); const name = form.name.trim(); if (!name) { toast('Enter a name'); return 'keep'; }
+    const budget = form.budget ? parseAmount(form.budget) : null;
+    const rec = {name, color:form.color, icon:form.icon, budget};
+    if (form.id) Object.assign(db.categories.find(c => c.id===form.id), rec);
+    else db.categories.push({id:uid(), type:form.type, ...rec});
+    save(); closeSheet();
+  },
+  'del-cat'(){
+    const c = db.categories.find(x => x.id===form.id); if (!c) return;
+    const used = db.transactions.some(t => t.categoryId===c.id) || db.recurring.some(r => r.categoryId===c.id);
+    if (used) c.archived = true; else db.categories = db.categories.filter(x => x !== c);
+    save(); closeSheet(); render();
+    toast(used ? 'Hidden (old entries keep it)' : 'Deleted', () => { if (used) delete c.archived; else db.categories.push(c); save(); render(); });
+    return 'keep';
+  },
+  'rec-edit'(_, __, id){ openRec(id); return 'keep'; },
+  'rec-toggle'(_, __, id){ const r = db.recurring.find(x => x.id===id); r.active = !r.active; save(); if (r.active) processRecurring(); },
+  'f-rtype'(_, v){ readRec(); form.type = v; renderRec(); return 'keep'; },
+  'f-active'(){ readRec(); form.active = !form.active; renderRec(); return 'keep'; },
+  'save-rec'(){
+    readRec(); const amount = parseAmount(form.amount), name = form.name.trim();
+    if (!name) { toast('Enter a name'); return 'keep'; }
+    if (!amount) { toast('Enter an amount'); return 'keep'; }
+    if (!form.date) { toast('Pick a date'); return 'keep'; }
+    const rec = {name, type:form.type, amount, categoryId:form.categoryId, freq:form.freq, next:`${form.date}T${form.time||'09:00'}`, day:parseYmd(form.date).getDate(), active:form.active};
+    if (form.id) Object.assign(db.recurring.find(r => r.id===form.id), rec);
+    else db.recurring.push({id:uid(), ...rec});
+    save(); closeSheet(); processRecurring();
+  },
+  'del-rec'(){
+    const i = db.recurring.findIndex(r => r.id===form.id); if (i < 0) return;
+    const [gone] = db.recurring.splice(i,1); save(); closeSheet(); render();
+    toast('Deleted', () => { db.recurring.push(gone); save(); render(); }); return 'keep';
+  },
+  async export(){
+    const ok = await shareOrDownload(`money-backup-${stamp()}.json`, JSON.stringify(db, null, 1), 'application/json');
+    if (ok) { db.lastBackup = Date.now(); save(); render(); toast('Backup saved'); }
+    return 'keep';
+  },
+  import(){ document.getElementById('importFile').click(); return 'keep'; },
+  csv(){
+    const q = s => `"${String(s??'').replace(/"/g,'""')}"`;
+    const rows = [['Date','Time','Type','Category','Amount','Note'].join(',')]
+      .concat([...db.transactions].sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time))
+      .map(x => [x.date, x.time, x.type, q(cat(x.categoryId).name), (x.amount/100).toFixed(2), q(x.note)].join(',')));
+    shareOrDownload(`money-${stamp()}.csv`, rows.join('\n'), 'text/csv'); return 'keep';
+  },
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-a]'); if (!t) return;
+  const fn = A[t.dataset.a]; if (!fn) return;
+  e.preventDefault(); e.stopPropagation();
+  if (fn(t, t.dataset.v, t.dataset.id) !== 'keep') render();
+});
+
+/* ---------- boot ---------- */
+processRecurring();
+render();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { processRecurring(); render(); } });
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
